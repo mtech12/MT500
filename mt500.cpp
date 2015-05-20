@@ -6,6 +6,7 @@ MT500::MT500(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MT500)
 {
+    qRegisterMetaType<myFipsCount>("myFipsCount");
     log = true;
     if(log) MTLOG("MT500 Object Constructed");
     ui->setupUi(this);

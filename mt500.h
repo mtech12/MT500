@@ -23,7 +23,6 @@
 QT_USE_NAMESPACE_SERIALPORT
 
 typedef QMap<QDateTime, QString> myFipsCount;
-qRegisterMetaType<myFipsCount>("myFipsCount");
 
 namespace Ui {
     class MT500;
@@ -41,6 +40,7 @@ class CountFipsThread : public QThread
 
     public:
         CountFipsThread(QObject *parent = 0) : QThread(parent) {
+            qRegisterMetaType<myFipsCount>("myFipsCount");
             m_getFiles = QStringList ();
             m_fipsDir = "";
             m_processingFips = false;
