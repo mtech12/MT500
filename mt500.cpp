@@ -405,6 +405,7 @@ void MT500::getFips() {
             }
             m_processingFips = false;
     }
+    else if(log) MTLOG("Already processing fips!");
 }
 
 void MT500::sendFips()
