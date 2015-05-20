@@ -19,8 +19,6 @@
 
 QT_USE_NAMESPACE_SERIALPORT
 
-class CountFipsThread;
-
 namespace Ui {
     class MT500;
 }
@@ -29,6 +27,78 @@ struct ipStruct {
     QString ip;
     int port;
     QString dataType;
+};
+
+class CountFipsThread : public QThread
+{
+    Q_OBJECT
+
+    public:
+        CountFipsThread(QObject *parent = 0) {
+            m_getFiles = QStringList ();
+            m_fipsDir = "";
+            m_processingFips = false;
+        }
+        ~CountFipsThread() {}
+
+        void countFips ( QStringList getFiles, QString fipsDir, bool &processingFips ) {
+            m_getFiles = getFiles;
+            m_fipsDir = fipsDir;
+            m_processingFips = processingFips;
+        }
+
+    protected:
+
+        void run() {
+            m_processingFips = true;
+            for(int i = 0; i < m_getFiles.size(); i++) {
+                QString line;
+                QMap<QDateTime, QString> tempSorter;
+                QString filename = m_fipsDir+m_getFiles.at(i).trimmed()+".dat";
+                emit threadLog(QString("Getting newest record in %1").arg(filename));
+                QFile file(filename);
+                if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                    QTextStream in(&file);
+                    while (!in.atEnd()) {
+                        line = in.readLine();
+                        QStringList fields = line.split(",");
+                        QString dateTime = fields.at(0);
+                        QDateTime newDate = QDateTime::fromString(dateTime.trimmed(), "MM/dd/yyyy HH:mm:ss");
+                        tempSorter.insertMulti(newDate, line);
+                    }
+                    QMap<QDateTime, QString>::iterator it;
+                    QDateTime newestRecord;
+                    int ctr = 0;
+                    for(it = tempSorter.begin(); it != tempSorter.end(); ++it) {
+                        ctr++;
+                        if(ctr == tempSorter.size()) {
+                            newestRecord = it.key();
+                            QMap<QDateTime, QString> tempMap;
+                            tempMap.insert(newestRecord, it.value());
+                            emit insertIntoFipsCount(m_getFiles.at(i).trimmed(), tempMap);
+                        }
+                    }
+                    emit threadLog(QString("Newest Record for %1: %2").arg(filename).arg(newestRecord.toString()));
+                }
+                else {
+                    emit threadLog(QString("Error opening file %1").arg(filename));
+                    QMap<QDateTime, QString> tempMap;
+                    tempMap.insert(QDateTime::fromString("01/01/1970 00:00:00", "MM/dd/yyyy HH:mm:ss"), "Empty Placeholder");
+                    emit insertIntoFipsCount(m_getFiles.at(i).trimmed(), tempMap);
+                }
+            }
+            m_processingFips = false;
+        }
+
+    signals:
+
+        void threadLog(QString);
+        void insertIntoFipsCount(QString, QMap<QDateTime, QString>);
+
+    private:
+        QStringList m_getFiles;
+        QString m_fipsDir;
+        bool m_processingFips;
 };
 
 class MT500 : public QMainWindow {
@@ -104,78 +174,6 @@ public:
     {
         QThread::msleep(msecs);
     }
-};
-
-class CountFipsThread : public QThread
-{
-    Q_OBJECT
-
-    public:
-        CountFipsThread(QObject *parent = 0) {
-            m_getFiles = QStringList ();
-            m_fipsDir = "";
-            m_processingFips = false;
-        }
-        ~CountFipsThread() {}
-
-        void countFips ( QStringList getFiles, QString fipsDir, bool &processingFips ) {
-            m_getFiles = getFiles;
-            m_fipsDir = fipsDir;
-            m_processingFips = processingFips;
-        }
-
-    protected:
-
-        void run() {
-            m_processingFips = true;
-            for(int i = 0; i < m_getFiles.size(); i++) {
-                QString line;
-                QMap<QDateTime, QString> tempSorter;
-                QString filename = m_fipsDir+m_getFiles.at(i).trimmed()+".dat";
-                emit threadLog(QString("Getting newest record in %1").arg(filename));
-                QFile file(filename);
-                if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-                    QTextStream in(&file);
-                    while (!in.atEnd()) {
-                        line = in.readLine();
-                        QStringList fields = line.split(",");
-                        QString dateTime = fields.at(0);
-                        QDateTime newDate = QDateTime::fromString(dateTime.trimmed(), "MM/dd/yyyy HH:mm:ss");
-                        tempSorter.insertMulti(newDate, line);
-                    }
-                    QMap<QDateTime, QString>::iterator it;
-                    QDateTime newestRecord;
-                    int ctr = 0;
-                    for(it = tempSorter.begin(); it != tempSorter.end(); ++it) {
-                        ctr++;
-                        if(ctr == tempSorter.size()) {
-                            newestRecord = it.key();
-                            QMap<QDateTime, QString> tempMap;
-                            tempMap.insert(newestRecord, it.value());
-                            emit insertIntoFipsCount(m_getFiles.at(i).trimmed(), tempMap);
-                        }
-                    }
-                    emit threadLog(QString("Newest Record for %1: %2").arg(filename).arg(newestRecord.toString()));
-                }
-                else {
-                    emit threadLog(QString("Error opening file %1").arg(filename));
-                    QMap<QDateTime, QString> tempMap;
-                    tempMap.insert(QDateTime::fromString("01/01/1970 00:00:00", "MM/dd/yyyy HH:mm:ss"), "Empty Placeholder");
-                    emit insertIntoFipsCount(m_getFiles.at(i).trimmed(), tempMap);
-                }
-            }
-            m_processingFips = false;
-        }
-
-    signals:
-
-        void threadLog(QString);
-        void insertIntoFipsCount(QString, QMap<QDateTime, QString>);
-
-    private:
-        QStringList m_getFiles;
-        QString m_fipsDir;
-        bool m_processingFips;
 };
 
 #endif // MT500_H
