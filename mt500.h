@@ -191,7 +191,7 @@ protected:
                                 QStringList recordFields = it.value().split(",");
                                 QDateTime dateTime = it.key();
                                 QString record = it.value();
-                                QMap<QDateTime, QString> recordInfo = m_fipsCount.value(getFiles.at(i));
+                                QMap<QDateTime, QString> recordInfo = m_fipsCount.value(m_getFiles.at(i));
                                 QMap<QDateTime, QString>::iterator ri = recordInfo.begin();
                                 QDateTime oldTime = ri.key();
                                 QString oldRecord = ri.value();
@@ -206,14 +206,14 @@ protected:
                                         emit incrementCloudCount ();
                                         emit clearCloud ();
                                         if(!m_fipsFilter.contains(gid)) {
-                                            emit insertInfoFipsFilter(gid, dateTime);
+                                            emit insertIntoFipsFilter(gid, dateTime);
                                             emit insertIntoSendList(listCounter, dateTime.toString()+"$"+recordFields.at(3).trimmed());
                                             listCounter++;
                                         }
                                         else {
                                             QDateTime prevTime = m_fipsFilter.value(gid); //Get previous time value
                                             if(dateTime > prevTime.addSecs(60)) { //Only concerned about it if enough time has passed
-                                                emit insertInfoFipsFilter(gid, dateTime);
+                                                emit insertIntoFipsFilter(gid, dateTime);
                                                 emit insertIntoSendList(listCounter, dateTime.toString()+"$"+recordFields.at(3).trimmed());//add to pass list
                                                 listCounter++;
                                             }
