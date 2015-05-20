@@ -15,6 +15,7 @@ MT500::MT500(QWidget *parent) :
     ui->versionLbl->setText("Program Version: " + progVer);
     ui->rxLabel->setText("Messages Transmitted: 0");
     initial = false;
+    m_processingFips = false;
     ui->ipTable->setColumnWidth(0, 120);
     getConfig();
     byteCount = 0;
@@ -405,7 +406,9 @@ void MT500::getFips() {
             }
             m_processingFips = false;
     }
-    else if(log) MTLOG("Already processing fips!");
+    else {
+        if(log) MTLOG("Already processing fips!");
+    }
 }
 
 void MT500::sendFips()
