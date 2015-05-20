@@ -89,6 +89,7 @@ class CountFipsThread : public QThread
                                 newestRecord = it.key();
                                 QMap<QDateTime, QString> tempMap;
                                 tempMap.insert(newestRecord, it.value());
+                                emit threadLog("Emitting insertIntoFipsCount signal...");
                                 emit insertIntoFipsCount(m_getFiles.at(i).trimmed(), tempMap);
                             }
                         }
