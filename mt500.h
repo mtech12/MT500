@@ -147,7 +147,7 @@ public:
         m_fipsDir = fipsDir;
         m_fipsCount = fipsCount;
         m_fipsFilter = fipsFilter;
-        m_filterList - filterList;
+        m_filterList = filterList;
 
         if (!isRunning ()) {
             start(HighPriority);
