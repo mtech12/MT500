@@ -91,7 +91,7 @@ class CountFipsThread : public QThread
                                 QMap<QDateTime, QString> tempMap;
                                 tempMap.insert(newestRecord, it.value());
                                 emit threadLog("Emitting insertIntoFipsCount signal...");
-                                m_fipsCount.insert(getFiles.at(i).trimmed(), tempMap);                    
+                                m_fipsCount.insert(m_getFiles.at(i).trimmed(), tempMap);                    
                             }
                         }
                         emit threadLog(QString("Newest Record for %1: %2").arg(filename).arg(newestRecord.toString()));
@@ -100,7 +100,7 @@ class CountFipsThread : public QThread
                         emit threadLog(QString("Error opening file %1").arg(filename));
                         QMap<QDateTime, QString> tempMap;
                         tempMap.insert(QDateTime::fromString("01/01/1970 00:00:00", "MM/dd/yyyy HH:mm:ss"), "Empty Placeholder");
-                        m_fipsCount.insert(getFiles.at(i).trimmed(), tempMap);                    
+                        m_fipsCount.insert(m_getFiles.at(i).trimmed(), tempMap);                    
                     }
                 }
                 m_mutex.lock ();
