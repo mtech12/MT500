@@ -31,6 +31,10 @@ MT500::MT500(QWidget *parent) :
     connect(hbTimer, SIGNAL(timeout()), this, SLOT(sendHB()));
     fipsTimer = new QTimer(this);
     connect(fipsTimer, SIGNAL(timeout()), this, SLOT(getFips()));
+
+    //connect(&countFipsThread, SIGNAL(threadLog(QString)), this, SLOT(threadLog(QString)));
+    //connect(&countFipsThread, SIGNAL(insertIntoFipsCount(QString, QMap<QDateTime, QString>)), this, SLOT(insertIntoFipsCount(QString, QMap<QDateTime, QString>)));
+
     msgCount = 0; //Does not include heartbeat messages
     getIPs();
     getFipsCounts();
@@ -48,6 +52,15 @@ MT500::MT500(QWidget *parent) :
 MT500::~MT500()
 {
     delete ui;
+}
+
+void MT500::threadLog(QString toLog) {
+    if(log) MTLOG(toLog);
+}
+
+void MT500::insertIntoFipsCount(QString key, QMap<QDateTime, QString> value) {
+    if(log) MTLOG("Inserting into fipsCount");
+    fipsCount.insert(key, value);
 }
 
 void MT500::changeEvent(QEvent *e)
