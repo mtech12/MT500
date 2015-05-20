@@ -380,7 +380,7 @@ void MT500::sendHB() {
 }
 
 void MT500::getFips() {
-    getFipsThread.getFips (getFiles, fipsDir, fipsCount, fipsFilter, filterList, m_processingFips)
+    getFipsThread.getFips (getFiles, fipsDir, fipsCount, fipsFilter, filterList, m_processingFips);
     /*if (!m_processingFips) {
         m_processingFips = true;
         int listCounter = 0;
