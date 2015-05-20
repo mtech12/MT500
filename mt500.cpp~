@@ -403,7 +403,7 @@ void MT500::getFips() {
                     }
                     sendFips();//Process and send all data in send list
             }
-            m_processingFips = false;
+            m_processingFips = false
     }
 }
 
