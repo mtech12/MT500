@@ -380,7 +380,8 @@ void MT500::sendHB() {
 }
 
 void MT500::getFips() {
-    if (!m_processingFips) {
+    getFipsThread.getFips (getFiles, fipsDir, fipsCount, fipsFilter, filterList, m_processingFips)
+    /*if (!m_processingFips) {
         m_processingFips = true;
         int listCounter = 0;
         //fipsFilter.clear();
@@ -462,7 +463,7 @@ void MT500::getFips() {
     }
     else {
         if(log) MTLOG("Already processing fips!");
-    }
+    }*/
 }
 
 void MT500::sendFips()
