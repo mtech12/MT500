@@ -110,7 +110,7 @@ class CountFipsThread : public QThread
             m_fipsDir = "";
             m_processingFips = false;
         }
-        ~CountFipsThread();
+        ~CountFipsThread() {}
 
         void countFips ( QStringList getFiles, QString fipsDir, bool &processingFips ) {
             m_getFiles = getFiles;
