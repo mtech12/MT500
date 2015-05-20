@@ -33,7 +33,6 @@ MT500::MT500(QWidget *parent) :
     connect(fipsTimer, SIGNAL(timeout()), this, SLOT(getFips()));
 
     connect(&countFipsThread, SIGNAL(threadLog(QString)), this, SLOT(threadLog(QString)));
-    connect(&countFipsThread, SIGNAL(insertIntoFipsCount(QString, QMap<QDateTime, QString>)), this, SLOT(insertIntoFipsCount(QString, QMap<QDateTime, QString>)));
 
     msgCount = 0; //Does not include heartbeat messages
     getIPs();
@@ -56,11 +55,6 @@ MT500::~MT500()
 
 void MT500::threadLog(QString toLog) {
     if(log) MTLOG(toLog);
-}
-
-void MT500::insertIntoFipsCount(QString key, QMap<QDateTime, QString> value) {
-    if(log) MTLOG("Inserting into fipsCount");
-    fipsCount.insert(key, value);
 }
 
 void MT500::changeEvent(QEvent *e)
@@ -501,7 +495,7 @@ QStringList MT500::sortFips() //Sorts fips records by time before pushing to IFL
 
 void MT500::getFipsCounts()
 {
-    countFipsThread.countFips (getFiles, fipsDir, m_processingFips );
+    countFipsThread.countFips (fipsCount, getFiles, fipsDir, m_processingFips );
     /*m_processingFips = true;
     for(int i = 0; i < getFiles.size(); i++) {
         QString line;

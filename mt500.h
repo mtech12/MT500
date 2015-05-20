@@ -44,11 +44,12 @@ class CountFipsThread : public QThread
         }
         ~CountFipsThread() {}
 
-        void countFips ( QStringList getFiles, QString fipsDir, bool &processingFips ) {
+        void countFips ( QHash<QString, QMap<QDateTime, QString>> &fipsCount, QStringList getFiles, QString fipsDir, bool &processingFips) {
             //QMutexLocker(&m_mutex);
             m_getFiles = getFiles;
             m_fipsDir = fipsDir;
             m_processingFips = processingFips;
+            m_fipsCount = fipsCount;
 
             if (!isRunning ()) {
                 start(HighPriority);
@@ -90,7 +91,7 @@ class CountFipsThread : public QThread
                                 QMap<QDateTime, QString> tempMap;
                                 tempMap.insert(newestRecord, it.value());
                                 emit threadLog("Emitting insertIntoFipsCount signal...");
-                                emit insertIntoFipsCount(m_getFiles.at(i).trimmed(), tempMap);
+                                m_fipsCount.insert(getFiles.at(i).trimmed(), tempMap);                    
                             }
                         }
                         emit threadLog(QString("Newest Record for %1: %2").arg(filename).arg(newestRecord.toString()));
@@ -99,7 +100,7 @@ class CountFipsThread : public QThread
                         emit threadLog(QString("Error opening file %1").arg(filename));
                         QMap<QDateTime, QString> tempMap;
                         tempMap.insert(QDateTime::fromString("01/01/1970 00:00:00", "MM/dd/yyyy HH:mm:ss"), "Empty Placeholder");
-                        emit insertIntoFipsCount(m_getFiles.at(i).trimmed(), tempMap);
+                        m_fipsCount.insert(getFiles.at(i).trimmed(), tempMap);                    
                     }
                 }
                 m_mutex.lock ();
@@ -112,12 +113,12 @@ class CountFipsThread : public QThread
     signals:
 
         void threadLog(QString);
-        void insertIntoFipsCount(QString, QMap<QDateTime, QString>);
 
     private:
         QStringList m_getFiles;
         QString m_fipsDir;
         bool m_processingFips;
+        QHash<QString, QMap<QDateTime, QString>> m_fipsCount;
         QMutex m_mutex;
         QWaitCondition m_condition;
 };
@@ -157,7 +158,6 @@ public slots:
     void clrBuf();
 
     void threadLog(QString);
-    void insertIntoFipsCount(QString, QMap<QDateTime, QString>);
 
 private slots:
     void on_addButton_clicked();
