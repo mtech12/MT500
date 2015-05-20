@@ -201,7 +201,7 @@ protected:
                                     int gid = recordFields.at(1).trimmed().toInt();
                                     int node = recordFields.at(4).trimmed().toInt();
                                     if(inFilter(node, gid)) {
-                                        emit threadLog(QString("Record passed: %1 (%2)").arg(record).arg(getFiles.at(i).trimmed()));
+                                        emit threadLog(QString("Record passed: %1 (%2)").arg(record).arg(m_getFiles.at(i).trimmed()));
                                         emit appendToCloud("<font color=\"green\">" + record + "</font>");
                                         emit incrementCloudCount ();
                                         emit clearCloud ();
@@ -220,7 +220,7 @@ protected:
                                         }
                                     }
                                     else {
-                                        emit threadLog(QString("Record NOT passed: %1 (%2)").arg(record).arg(getFiles.at(i).trimmed()));
+                                        emit threadLog(QString("Record NOT passed: %1 (%2)").arg(record).arg(m_getFiles.at(i).trimmed()));
                                         emit appendToCloud("<font color=\"red\">" + record + "</font>");
                                         emit incrementCloudCount ();
                                         emit clearCloud ();
