@@ -16,6 +16,9 @@
 #include <QtAddOnSerialPort/serialportinfo.h>
 #include <QThread>
 #include <QTcpSocket>
+#include <QMutex>
+#include <QMutexLocker>
+#include <QWaitCondition>
 
 QT_USE_NAMESPACE_SERIALPORT
 
@@ -34,7 +37,7 @@ class CountFipsThread : public QThread
     Q_OBJECT
 
     public:
-        CountFipsThread(QObject *parent = 0) {
+        CountFipsThread(QObject *parent = 0) : QThread(parent) {
             m_getFiles = QStringList ();
             m_fipsDir = "";
             m_processingFips = false;
@@ -42,52 +45,67 @@ class CountFipsThread : public QThread
         ~CountFipsThread() {}
 
         void countFips ( QStringList getFiles, QString fipsDir, bool &processingFips ) {
+            QMutexLocker(&m_mutex);
             m_getFiles = getFiles;
             m_fipsDir = fipsDir;
             m_processingFips = processingFips;
+
+            if (!isRunning ()) {
+                start(HighPriority);
+            }
+            else {
+                m_condition.wakeOne ();
+            }
         }
 
     protected:
 
         void run() {
-            m_processingFips = true;
-            for(int i = 0; i < m_getFiles.size(); i++) {
-                QString line;
-                QMap<QDateTime, QString> tempSorter;
-                QString filename = m_fipsDir+m_getFiles.at(i).trimmed()+".dat";
-                emit threadLog(QString("Getting newest record in %1").arg(filename));
-                QFile file(filename);
-                if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-                    QTextStream in(&file);
-                    while (!in.atEnd()) {
-                        line = in.readLine();
-                        QStringList fields = line.split(",");
-                        QString dateTime = fields.at(0);
-                        QDateTime newDate = QDateTime::fromString(dateTime.trimmed(), "MM/dd/yyyy HH:mm:ss");
-                        tempSorter.insertMulti(newDate, line);
-                    }
-                    QMap<QDateTime, QString>::iterator it;
-                    QDateTime newestRecord;
-                    int ctr = 0;
-                    for(it = tempSorter.begin(); it != tempSorter.end(); ++it) {
-                        ctr++;
-                        if(ctr == tempSorter.size()) {
-                            newestRecord = it.key();
-                            QMap<QDateTime, QString> tempMap;
-                            tempMap.insert(newestRecord, it.value());
-                            emit insertIntoFipsCount(m_getFiles.at(i).trimmed(), tempMap);
+            forever {
+                m_mutex.lock ();
+                m_processingFips = true;
+                m_mutex.unlock ();
+                for(int i = 0; i < m_getFiles.size(); i++) {
+                    QString line;
+                    QMap<QDateTime, QString> tempSorter;
+                    QString filename = m_fipsDir+m_getFiles.at(i).trimmed()+".dat";
+                    emit threadLog(QString("Getting newest record in %1").arg(filename));
+                    QFile file(filename);
+                    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                        QTextStream in(&file);
+                        while (!in.atEnd()) {
+                            line = in.readLine();
+                            QStringList fields = line.split(",");
+                            QString dateTime = fields.at(0);
+                            QDateTime newDate = QDateTime::fromString(dateTime.trimmed(), "MM/dd/yyyy HH:mm:ss");
+                            tempSorter.insertMulti(newDate, line);
                         }
+                        QMap<QDateTime, QString>::iterator it;
+                        QDateTime newestRecord;
+                        int ctr = 0;
+                        for(it = tempSorter.begin(); it != tempSorter.end(); ++it) {
+                            ctr++;
+                            if(ctr == tempSorter.size()) {
+                                newestRecord = it.key();
+                                QMap<QDateTime, QString> tempMap;
+                                tempMap.insert(newestRecord, it.value());
+                                emit insertIntoFipsCount(m_getFiles.at(i).trimmed(), tempMap);
+                            }
+                        }
+                        emit threadLog(QString("Newest Record for %1: %2").arg(filename).arg(newestRecord.toString()));
                     }
-                    emit threadLog(QString("Newest Record for %1: %2").arg(filename).arg(newestRecord.toString()));
+                    else {
+                        emit threadLog(QString("Error opening file %1").arg(filename));
+                        QMap<QDateTime, QString> tempMap;
+                        tempMap.insert(QDateTime::fromString("01/01/1970 00:00:00", "MM/dd/yyyy HH:mm:ss"), "Empty Placeholder");
+                        emit insertIntoFipsCount(m_getFiles.at(i).trimmed(), tempMap);
+                    }
                 }
-                else {
-                    emit threadLog(QString("Error opening file %1").arg(filename));
-                    QMap<QDateTime, QString> tempMap;
-                    tempMap.insert(QDateTime::fromString("01/01/1970 00:00:00", "MM/dd/yyyy HH:mm:ss"), "Empty Placeholder");
-                    emit insertIntoFipsCount(m_getFiles.at(i).trimmed(), tempMap);
-                }
+                m_mutex.lock ();
+                m_processingFips = false;
+                m_condition.wait (&m_mutex);
+                m_mutex.unlock ();
             }
-            m_processingFips = false;
         }
 
     signals:
@@ -99,6 +117,8 @@ class CountFipsThread : public QThread
         QStringList m_getFiles;
         QString m_fipsDir;
         bool m_processingFips;
+        QMutex m_mutex;
+        QWaitCondition m_condition;
 };
 
 class MT500 : public QMainWindow {
