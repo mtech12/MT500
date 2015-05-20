@@ -488,6 +488,7 @@ QStringList MT500::sortFips() //Sorts fips records by time before pushing to IFL
 
 void MT500::getFipsCounts()
 {
+    m_processingFips = true;
     for(int i = 0; i < getFiles.size(); i++) {
         QString line;
 		QMap<QDateTime, QString> tempSorter;
@@ -525,6 +526,7 @@ void MT500::getFipsCounts()
             fipsCount.insert(getFiles.at(i).trimmed(), tempMap);
         }
     }
+    m_processingFips = false;
 }
 
 void MT500::setupRS232(QString in, QString out)
