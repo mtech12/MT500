@@ -339,6 +339,7 @@ void MT500::getFips() {
         int listCounter = 0;
         //fipsFilter.clear();
         if(log) MTLOG("Getting fips files...");
+        if(log) MTLOG(QString("Fips Count size: %1").arg(fipsCount.size()));
         if(getFiles.size() > 0) {
             for(int i = 0; i < getFiles.size(); i++) {
                 QString line;
