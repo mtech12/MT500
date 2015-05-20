@@ -44,7 +44,7 @@ class CountFipsThread : public QThread
         }
         ~CountFipsThread() {}
 
-        void countFips ( QHash<QString, QMap<QDateTime, QString>> &fipsCount, QStringList getFiles, QString fipsDir, bool &processingFips) {
+        void countFips ( QHash<QString, QMap<QDateTime, QString> > &fipsCount, QStringList getFiles, QString fipsDir, bool &processingFips) {
             //QMutexLocker(&m_mutex);
             m_getFiles = getFiles;
             m_fipsDir = fipsDir;
@@ -118,7 +118,7 @@ class CountFipsThread : public QThread
         QStringList m_getFiles;
         QString m_fipsDir;
         bool m_processingFips;
-        QHash<QString, QMap<QDateTime, QString>> m_fipsCount;
+        QHash<QString, QMap<QDateTime, QString> > m_fipsCount;
         QMutex m_mutex;
         QWaitCondition m_condition;
 };
