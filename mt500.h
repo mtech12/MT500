@@ -45,7 +45,7 @@ class CountFipsThread : public QThread
         ~CountFipsThread() {}
 
         void countFips ( QStringList getFiles, QString fipsDir, bool &processingFips ) {
-            QMutexLocker(&m_mutex);
+            //QMutexLocker(&m_mutex);
             m_getFiles = getFiles;
             m_fipsDir = fipsDir;
             m_processingFips = processingFips;
