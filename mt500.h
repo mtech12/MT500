@@ -122,10 +122,10 @@ class CountFipsThread : public QThread
 
         void run() {
             m_processingFips = true;
-            for(int i = 0; i < getFiles.size(); i++) {
+            for(int i = 0; i < m_getFiles.size(); i++) {
                 QString line;
                 QMap<QDateTime, QString> tempSorter;
-                QString filename = fipsDir+getFiles.at(i).trimmed()+".dat";
+                QString filename = m_fipsDir+m_getFiles.at(i).trimmed()+".dat";
                 emit threadLog(QString("Getting newest record in %1").arg(filename));
                 QFile file(filename);
                 if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -146,7 +146,7 @@ class CountFipsThread : public QThread
                             newestRecord = it.key();
                             QMap<QDateTime, QString> tempMap;
                             tempMap.insert(newestRecord, it.value());
-                            emit insertIntoFipsCount(getFiles.at(i).trimmed(), tempMap);
+                            emit insertIntoFipsCount(m_getFiles.at(i).trimmed(), tempMap);
                         }
                     }
                     emit threadLog(QString("Newest Record for %1: %2").arg(filename).arg(newestRecord.toString()));
@@ -155,7 +155,7 @@ class CountFipsThread : public QThread
                     emit threadLog(QString("Error opening file %1").arg(filename));
                     QMap<QDateTime, QString> tempMap;
                     tempMap.insert(QDateTime::fromString("01/01/1970 00:00:00", "MM/dd/yyyy HH:mm:ss"), "Empty Placeholder");
-                    emit insertIntoFipsCount(getFiles.at(i).trimmed(), tempMap);
+                    emit insertIntoFipsCount(m_getFiles.at(i).trimmed(), tempMap);
                 }
             }
             m_processingFips = false;
