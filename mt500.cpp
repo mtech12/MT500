@@ -326,81 +326,85 @@ void MT500::sendHB() {
 }
 
 void MT500::getFips() {
-    int listCounter = 0;
-    //fipsFilter.clear();
-    if(log) MTLOG("Getting fips files...");
-    if(getFiles.size() > 0) {
-        for(int i = 0; i < getFiles.size(); i++) {
-            QString line;
-            QString filename = fipsDir+getFiles.at(i).trimmed()+".dat";
-            QFile file(filename);
-            if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-                QMap<QDateTime, QString> tempSorter;
-				MTLOG(QString("Reading file %1").arg(filename));
-                QTextStream in(&file);
-                while (!in.atEnd()) {
-                    line = in.readLine();
-                    QStringList fields2 = line.split(",");
-                    QString dateTime = fields2.at(0);
-                    QDateTime newDate = QDateTime::fromString(dateTime.trimmed(), "MM/dd/yyyy HH:mm:ss");
-					tempSorter.insertMulti(newDate, line);
-				}
-				file.close();
-				//Loop over sorted file and check for shit
-				QMap<QDateTime, QString>::iterator it;
-				for(it = tempSorter.begin(); it != tempSorter.end(); ++it) {
-				    QStringList recordFields = it.value().split(",");
-					QDateTime dateTime = it.key();
-					QString record = it.value();
-                                        QMap<QDateTime, QString> recordInfo = fipsCount.value(getFiles.at(i));
-					QMap<QDateTime, QString>::iterator ri = recordInfo.begin();
-					QDateTime oldTime = ri.key();
-					QString oldRecord = ri.value();
-					if((dateTime >= oldTime) && (record != oldRecord)) {   // If new record
-                        if(log) MTLOG(QString("New record: %1").arg(record));
-                        QMap<QDateTime, QString> tempMap;
-			tempMap.insert(dateTime, record);
-                        fipsCount.insert(getFiles.at(i).trimmed(), tempMap);                    
-                        int gid = recordFields.at(1).trimmed().toInt();
-                        int node = recordFields.at(4).trimmed().toInt();
-                        if(inFilter(node, gid)) {
-                            if(log) MTLOG(QString("Record passed: %1 (%2)").arg(record).arg(getFiles.at(i).trimmed()));
-                            ui->CloudBrowser->append("<font color=\"green\">" + record + "</font>");
-                            cloudCnt++;
-                            if(cloudCnt > 500) {
-                                ui->CloudBrowser->clear();
-                                cloudCnt = 0;
-                            }
-                            if(!fipsFilter.contains(gid)) {
-                                fipsFilter.insert(gid, dateTime); //Update fips filter
-                                sendList.insert(listCounter, dateTime.toString()+"$"+recordFields.at(3).trimmed());
-                                listCounter++;
-                            }
-                            else {
-                                QDateTime prevTime = fipsFilter.value(gid); //Get previous time value
-                                if(dateTime > prevTime.addSecs(60)) { //Only concerned about it if enough time has passed
+    if (!m_processingFips) {
+        m_processingFips = true;
+        int listCounter = 0;
+        //fipsFilter.clear();
+        if(log) MTLOG("Getting fips files...");
+        if(getFiles.size() > 0) {
+            for(int i = 0; i < getFiles.size(); i++) {
+                QString line;
+                QString filename = fipsDir+getFiles.at(i).trimmed()+".dat";
+                QFile file(filename);
+                if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                    QMap<QDateTime, QString> tempSorter;
+                                    MTLOG(QString("Reading file %1").arg(filename));
+                    QTextStream in(&file);
+                    while (!in.atEnd()) {
+                        line = in.readLine();
+                        QStringList fields2 = line.split(",");
+                        QString dateTime = fields2.at(0);
+                        QDateTime newDate = QDateTime::fromString(dateTime.trimmed(), "MM/dd/yyyy HH:mm:ss");
+                                            tempSorter.insertMulti(newDate, line);
+                                    }
+                                    file.close();
+                                    //Loop over sorted file and check for shit
+                                    QMap<QDateTime, QString>::iterator it;
+                                    for(it = tempSorter.begin(); it != tempSorter.end(); ++it) {
+                                        QStringList recordFields = it.value().split(",");
+                                            QDateTime dateTime = it.key();
+                                            QString record = it.value();
+                                            QMap<QDateTime, QString> recordInfo = fipsCount.value(getFiles.at(i));
+                                            QMap<QDateTime, QString>::iterator ri = recordInfo.begin();
+                                            QDateTime oldTime = ri.key();
+                                            QString oldRecord = ri.value();
+                                            if((dateTime >= oldTime) && (record != oldRecord)) {   // If new record
+                            if(log) MTLOG(QString("New record: %1").arg(record));
+                            QMap<QDateTime, QString> tempMap;
+                            tempMap.insert(dateTime, record);
+                            fipsCount.insert(getFiles.at(i).trimmed(), tempMap);                    
+                            int gid = recordFields.at(1).trimmed().toInt();
+                            int node = recordFields.at(4).trimmed().toInt();
+                            if(inFilter(node, gid)) {
+                                if(log) MTLOG(QString("Record passed: %1 (%2)").arg(record).arg(getFiles.at(i).trimmed()));
+                                ui->CloudBrowser->append("<font color=\"green\">" + record + "</font>");
+                                cloudCnt++;
+                                if(cloudCnt > 500) {
+                                    ui->CloudBrowser->clear();
+                                    cloudCnt = 0;
+                                }
+                                if(!fipsFilter.contains(gid)) {
                                     fipsFilter.insert(gid, dateTime); //Update fips filter
-                                    sendList.insert(listCounter, dateTime.toString()+"$"+recordFields.at(3).trimmed());//add to pass list
+                                    sendList.insert(listCounter, dateTime.toString()+"$"+recordFields.at(3).trimmed());
                                     listCounter++;
                                 }
+                                else {
+                                    QDateTime prevTime = fipsFilter.value(gid); //Get previous time value
+                                    if(dateTime > prevTime.addSecs(60)) { //Only concerned about it if enough time has passed
+                                        fipsFilter.insert(gid, dateTime); //Update fips filter
+                                        sendList.insert(listCounter, dateTime.toString()+"$"+recordFields.at(3).trimmed());//add to pass list
+                                        listCounter++;
+                                    }
+                                }
                             }
-                        }
-						else {
-							if(log) MTLOG(QString("Record NOT passed: %1 (%2)").arg(record).arg(getFiles.at(i).trimmed()));
-							ui->CloudBrowser->append("<font color=\"red\">" + record + "</font>");
-							cloudCnt++;
-							if(cloudCnt > 500) {
-								ui->CloudBrowser->clear();
-								cloudCnt = 0;
-							}
-						}
-					}
-				}
-			}
-			else if(log) MTLOG(QString("Error opening file %1").arg(filename));
-		}
-		sendFips();//Process and send all data in send list
-	}
+                                                    else {
+                                                            if(log) MTLOG(QString("Record NOT passed: %1 (%2)").arg(record).arg(getFiles.at(i).trimmed()));
+                                                            ui->CloudBrowser->append("<font color=\"red\">" + record + "</font>");
+                                                            cloudCnt++;
+                                                            if(cloudCnt > 500) {
+                                                                    ui->CloudBrowser->clear();
+                                                                    cloudCnt = 0;
+                                                            }
+                                                    }
+                                            }
+                                    }
+                            }
+                            else if(log) MTLOG(QString("Error opening file %1").arg(filename));
+                    }
+                    sendFips();//Process and send all data in send list
+            }
+            m_processingFips = false
+    }
 }
 
 void MT500::sendFips()
@@ -776,6 +780,9 @@ void MT500::sendRawStrtoIflows(QString rawStr)
 
 bool MT500::inFilter(int node, int gid)
 {
+
+    if (filterList.size() == 0) return true;
+
     bool rValue = false;
 
     QList<QString> wildCard = filterList.values("*");

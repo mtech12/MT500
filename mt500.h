@@ -85,7 +85,7 @@ private:
     QHash<QString, QMap<QDateTime, QString> > fipsCount;
     SerialPort *inPort, *outPort;
     QByteArray msg, ba;
-    bool initial, log;
+    bool initial, log, m_processingFips;
     QHash<int, QDateTime> fipsFilter; //GID, Last Record
     QHash<int, QString> sendList; //Index, Time:Raw Data
     QHash<QString, QString> filterList; //Node, GID
