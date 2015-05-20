@@ -91,7 +91,7 @@ void MT500::clearCloud () {
     }
 }
 
-void MT500::insertInfoFipsFilter(int gid, QDateTime dateTime) {
+void MT500::insertIntoFipsFilter(int gid, QDateTime dateTime) {
     fipsFilter.insert(gid, dateTime); //Update fips filter
 }
 
