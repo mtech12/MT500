@@ -19,6 +19,8 @@
 
 QT_USE_NAMESPACE_SERIALPORT
 
+class CountFipsThread;
+
 namespace Ui {
     class MT500;
 }
