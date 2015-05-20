@@ -34,7 +34,7 @@ MT500::MT500(QWidget *parent) :
     connect(fipsTimer, SIGNAL(timeout()), this, SLOT(getFips()));
 
     connect(&countFipsThread, SIGNAL(threadLog(QString)), this, SLOT(threadLog(QString)));
-    connect(&countFipsThread, SIGNAL(insertInfoFipsCount(QString, myFipsCount)), this, SLOT(insertIntoFipsCount(QString, myFipsCount)));
+    connect(&countFipsThread, SIGNAL(insertIntoFipsCount(QString, myFipsCount)), this, SLOT(insertIntoFipsCount(QString, myFipsCount)));
 
     msgCount = 0; //Does not include heartbeat messages
     getIPs();
