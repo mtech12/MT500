@@ -90,18 +90,20 @@ class CountFipsThread : public QThread
                             ctr++;
                             if(ctr == tempSorter.size()) {
                                 newestRecord = it.key();
-                                QMap<QDateTime, QString> tempMap;
-                                tempMap.insert(newestRecord, it.value());
-                                emit insertIntoFipsCount(m_getFiles.at(i).trimmed(), tempMap);                    
+                                //QMap<QDateTime, QString> tempMap;
+                                //tempMap.insert(newestRecord, it.value());
+                                //emit insertIntoFipsCount(m_getFiles.at(i).trimmed(), tempMap);                    
+                                emit insertIntoFipsCount(m_getFiles.at(i).trimmed(), newestRecord, it.value());                    
                             }
                         }
                         emit threadLog(QString("Newest Record for %1: %2").arg(filename).arg(newestRecord.toString()));
                     }
                     else {
                         emit threadLog(QString("Error opening file %1").arg(filename));
-                        QMap<QDateTime, QString> tempMap;
-                        tempMap.insert(QDateTime::fromString("01/01/1970 00:00:00", "MM/dd/yyyy HH:mm:ss"), "Empty Placeholder");
-                        emit insertIntoFipsCount (m_getFiles.at(i).trimmed(), tempMap);                    
+                        //QMap<QDateTime, QString> tempMap;
+                        //tempMap.insert(QDateTime::fromString("01/01/1970 00:00:00", "MM/dd/yyyy HH:mm:ss"), "Empty Placeholder");
+                        //emit insertIntoFipsCount (m_getFiles.at(i).trimmed(), tempMap);                    
+                        emit insertIntoFipsCount(m_getFiles.at(i).trimmed(), QDateTime::fromString("01/01/1970 00:00:00", "MM/dd/yyyy HH:mm:ss"), "Empty Placeholder");                    
                     }
                 }
                 m_mutex.lock ();
@@ -114,7 +116,8 @@ class CountFipsThread : public QThread
     signals:
 
         void threadLog(QString);
-        void insertIntoFipsCount (QString, myFipsCount);
+        //void insertIntoFipsCount (QString, myFipsCount);
+        void insertIntoFipsCount (QString key, QDateTime dateTime, QString record)
 
     private:
         QStringList m_getFiles;
@@ -160,7 +163,8 @@ public slots:
     void clrBuf();
 
     void threadLog(QString);
-    void insertIntoFipsCount (QString, myFipsCount);
+    //void insertIntoFipsCount (QString, myFipsCount);
+    void insertIntoFipsCount (QString key, QDateTime dateTime, QString record)
 
 private slots:
     void on_addButton_clicked();
