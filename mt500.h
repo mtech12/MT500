@@ -140,7 +140,7 @@ public:
         m_mutex.unlock ();
     }
 
-    void getFips (QStringList getFiles, QString fipsDir, QHash<QString, QMap<DateTime, QString> > fipsCount, QHash<int, QDateTime> fipsFilter, QHash<QString, QString> filterList, bool &processingFips) {
+    void getFips (QStringList getFiles, QString fipsDir, QHash<QString, QMap<QDateTime, QString> > fipsCount, QHash<int, QDateTime> fipsFilter, QHash<QString, QString> filterList, bool &processingFips) {
         m_abort = false;
         m_processingFips = processingFips;
         m_getFiles = getFiles;
