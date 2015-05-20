@@ -22,6 +22,9 @@
 
 QT_USE_NAMESPACE_SERIALPORT
 
+typedef QMap<QDateTime, QString> myFipsCount;
+qRegisterMetaType<myFipsCount>("myFipsCount");
+
 namespace Ui {
     class MT500;
 }
@@ -44,12 +47,11 @@ class CountFipsThread : public QThread
         }
         ~CountFipsThread() {}
 
-        void countFips ( QHash<QString, QMap<QDateTime, QString> > &fipsCount, QStringList getFiles, QString fipsDir, bool &processingFips) {
+        void countFips (QStringList getFiles, QString fipsDir, bool &processingFips) {
             //QMutexLocker(&m_mutex);
             m_getFiles = getFiles;
             m_fipsDir = fipsDir;
             m_processingFips = processingFips;
-            m_fipsCount = fipsCount;
 
             if (!isRunning ()) {
                 start(HighPriority);
@@ -90,7 +92,7 @@ class CountFipsThread : public QThread
                                 newestRecord = it.key();
                                 QMap<QDateTime, QString> tempMap;
                                 tempMap.insert(newestRecord, it.value());
-                                m_fipsCount.insert(m_getFiles.at(i).trimmed(), tempMap);                    
+                                emit insertIntoFipsCount(m_getFiles.at(i).trimmed(), tempMap);                    
                             }
                         }
                         emit threadLog(QString("Newest Record for %1: %2").arg(filename).arg(newestRecord.toString()));
@@ -99,7 +101,7 @@ class CountFipsThread : public QThread
                         emit threadLog(QString("Error opening file %1").arg(filename));
                         QMap<QDateTime, QString> tempMap;
                         tempMap.insert(QDateTime::fromString("01/01/1970 00:00:00", "MM/dd/yyyy HH:mm:ss"), "Empty Placeholder");
-                        m_fipsCount.insert(m_getFiles.at(i).trimmed(), tempMap);                    
+                        emit insertIntoFipsCount (m_getFiles.at(i).trimmed(), tempMap);                    
                     }
                 }
                 m_mutex.lock ();
@@ -112,6 +114,7 @@ class CountFipsThread : public QThread
     signals:
 
         void threadLog(QString);
+        void insertIntoFipsCount (QString, myFipsCount);
 
     private:
         QStringList m_getFiles;
@@ -157,6 +160,7 @@ public slots:
     void clrBuf();
 
     void threadLog(QString);
+    void insertIntoFipsCount (QString, myFipsCount);
 
 private slots:
     void on_addButton_clicked();

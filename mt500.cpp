@@ -53,8 +53,15 @@ MT500::~MT500()
     delete ui;
 }
 
-void MT500::threadLog(QString toLog) {
+void MT500::threadLog(QString toLog) 
+{
     if(log) MTLOG(toLog);
+}
+
+void MT500::insertIntoFipsCount (QString key, myFipsCount value)
+{
+    if(log) MTLOG("Insert into fipscount...");
+    fipsCount.insert(key, value);
 }
 
 void MT500::changeEvent(QEvent *e)
