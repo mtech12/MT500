@@ -164,7 +164,7 @@ class CountFipsThread : public QThread
     signals:
 
         void threadLog(QString);
-        void insertIntoFipsCount(QString, QMap<QDateTime, QString>;
+        void insertIntoFipsCount(QString, QMap<QDateTime, QString>);
 
     private:
         QStringList m_getFiles;
