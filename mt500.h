@@ -120,7 +120,7 @@ class CountFipsThread : public QThread
 
     protected:
 
-        void run() Q_DECL_OVERRIDE {
+        void run() {
             m_processingFips = true;
             for(int i = 0; i < getFiles.size(); i++) {
                 QString line;
