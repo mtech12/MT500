@@ -117,7 +117,7 @@ class CountFipsThread : public QThread
 
         void threadLog(QString);
         //void insertIntoFipsCount (QString, myFipsCount);
-        void insertIntoFipsCount (QString key, QDateTime dateTime, QString record)
+        void insertIntoFipsCount (QString key, QDateTime dateTime, QString record);
 
     private:
         QStringList m_getFiles;
@@ -164,7 +164,7 @@ public slots:
 
     void threadLog(QString);
     //void insertIntoFipsCount (QString, myFipsCount);
-    void insertIntoFipsCount (QString key, QDateTime dateTime, QString record)
+    void insertIntoFipsCount (QString key, QDateTime dateTime, QString record);
 
 private slots:
     void on_addButton_clicked();
