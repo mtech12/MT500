@@ -35,6 +35,15 @@ MT500::MT500(QWidget *parent) :
     connect(&countFipsThread, SIGNAL(threadLog(QString)), this, SLOT(threadLog(QString)));
     connect(&countFipsThread, SIGNAL(insertIntoFipsCount(QString, QDateTime, QString)), this, SLOT(insertIntoFipsCount(QString, QDateTime, QString)));
 
+    connect(&getFipsThread, SIGNAL(threadLog(QString)), this, SLOT(threadLog(QString)));
+    connect(&getFipsThread, SIGNAL(insertIntoFipsCount(QString,QDateTime,QString)), this, SLOT(insertIntoFipsCount(QString,QDateTime,QString)));
+    connect(&getFipsThread, SIGNAL(appendToCloud(QString)), this, SLOT(appendToCloud(QString)));
+    connect(&getFipsThread, SIGNAL(incrementCloudCount()), this, SLOT(incrementCloudCount()));
+    connect(&getFipsThread, SIGNAL(clearCloud()), this, SLOT(clearCloud()));
+    connect(&getFipsThread, SIGNAL(insertIntoFipsFilter(int,QDateTime)), this, SLOT(insertIntoFipsFilter(int,QDateTime)));
+    connect(&getFipsThread, SIGNAL(insertIntoSendList(int,QString)), this, SLOT(insertIntoSendList(int,QString)));
+    connect(&getFipsThread, SIGNAL(sendFips()), this, SLOT(act_sendFips()));
+
     msgCount = 0; //Does not include heartbeat messages
     getIPs();
     getFipsCounts();
@@ -64,7 +73,34 @@ void MT500::insertIntoFipsCount (QString key, QDateTime dateTime, QString record
     if(log) MTLOG("Insert into fipscount...");
     QMap<QDateTime, QString> tempMap;
     tempMap.insert(dateTime, record);
-    fipsCount.insert(key, tempMap);                    
+    fipsCount.insert(key, tempMap);
+}
+
+void MT500::appendToCloud(QString toAppend) {
+    ui->CloudBrowser->append(toAppend);
+}
+
+void MT500::incrementCloudCount () {
+    cloudCnt++;
+}
+
+void MT500::clearCloud () {
+    if(cloudCnt > 500) {
+        ui->CloudBrowser->clear();
+        cloudCnt = 0;
+    }
+}
+
+void MT500::insertInfoFipsFilter(int gid, QDateTime dateTime) {
+    fipsFilter.insert(gid, dateTime); //Update fips filter
+}
+
+void MT500::insertIntoSendList(int listCounter, QString recordString) {
+    sendList.insert(listCounter, recordString);
+}
+
+void MT500::act_sendFips() {
+    sendFips();
 }
 
 void MT500::changeEvent(QEvent *e)
@@ -279,17 +315,17 @@ void MT500::getConfig()
                 for(int i = 0; i < filterArr.size(); i++) {
                     temp = filterArr.at(i);
                     pairs = temp.trimmed().split(":");
-					if(pairs.size() > 1) {
-						if(pairs.at(1).contains("-")) {
-							range = pairs.at(1).trimmed().split("-");
-							begin = range.at(0).trimmed().toInt();
-							end = range.at(1).trimmed().toInt();
-							for(int i = begin; i <= end; i++) {
-								filterList.insertMulti(pairs.at(0).trimmed(), QString::number(i));
-							}
-						}
-						else filterList.insertMulti(pairs.at(0).trimmed(),pairs.at(1).trimmed());
-					}
+                    if(pairs.size() > 1) {
+                        if(pairs.at(1).contains("-")) {
+                            range = pairs.at(1).trimmed().split("-");
+                            begin = range.at(0).trimmed().toInt();
+                            end = range.at(1).trimmed().toInt();
+                            for(int i = begin; i <= end; i++) {
+                                filterList.insertMulti(pairs.at(0).trimmed(), QString::number(i));
+                            }
+                        }
+                        else filterList.insertMulti(pairs.at(0).trimmed(),pairs.at(1).trimmed());
+                    }
                 }
             }
         }
@@ -357,31 +393,31 @@ void MT500::getFips() {
                 QFile file(filename);
                 if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
                     QMap<QDateTime, QString> tempSorter;
-                                    MTLOG(QString("Reading file %1").arg(filename));
+                    MTLOG(QString("Reading file %1").arg(filename));
                     QTextStream in(&file);
                     while (!in.atEnd()) {
                         line = in.readLine();
                         QStringList fields2 = line.split(",");
                         QString dateTime = fields2.at(0);
                         QDateTime newDate = QDateTime::fromString(dateTime.trimmed(), "MM/dd/yyyy HH:mm:ss");
-                                            tempSorter.insertMulti(newDate, line);
-                                    }
-                                    file.close();
-                                    //Loop over sorted file and check for shit
-                                    QMap<QDateTime, QString>::iterator it;
-                                    for(it = tempSorter.begin(); it != tempSorter.end(); ++it) {
-                                        QStringList recordFields = it.value().split(",");
-                                            QDateTime dateTime = it.key();
-                                            QString record = it.value();
-                                            QMap<QDateTime, QString> recordInfo = fipsCount.value(getFiles.at(i));
-                                            QMap<QDateTime, QString>::iterator ri = recordInfo.begin();
-                                            QDateTime oldTime = ri.key();
-                                            QString oldRecord = ri.value();
-                                            if((dateTime >= oldTime) && (record != oldRecord)) {   // If new record
+                        tempSorter.insertMulti(newDate, line);
+                    }
+                    file.close();
+                    //Loop over sorted file and check for shit
+                    QMap<QDateTime, QString>::iterator it;
+                    for(it = tempSorter.begin(); it != tempSorter.end(); ++it) {
+                        QStringList recordFields = it.value().split(",");
+                        QDateTime dateTime = it.key();
+                        QString record = it.value();
+                        QMap<QDateTime, QString> recordInfo = fipsCount.value(getFiles.at(i));
+                        QMap<QDateTime, QString>::iterator ri = recordInfo.begin();
+                        QDateTime oldTime = ri.key();
+                        QString oldRecord = ri.value();
+                        if((dateTime >= oldTime) && (record != oldRecord)) {   // If new record
                             if(log) MTLOG(QString("New record: %1").arg(record));
                             QMap<QDateTime, QString> tempMap;
                             tempMap.insert(dateTime, record);
-                            fipsCount.insert(getFiles.at(i).trimmed(), tempMap);                    
+                            fipsCount.insert(getFiles.at(i).trimmed(), tempMap);
                             int gid = recordFields.at(1).trimmed().toInt();
                             int node = recordFields.at(4).trimmed().toInt();
                             if(inFilter(node, gid)) {
@@ -406,23 +442,23 @@ void MT500::getFips() {
                                     }
                                 }
                             }
-                                                    else {
-                                                            if(log) MTLOG(QString("Record NOT passed: %1 (%2)").arg(record).arg(getFiles.at(i).trimmed()));
-                                                            ui->CloudBrowser->append("<font color=\"red\">" + record + "</font>");
-                                                            cloudCnt++;
-                                                            if(cloudCnt > 500) {
-                                                                    ui->CloudBrowser->clear();
-                                                                    cloudCnt = 0;
-                                                            }
-                                                    }
-                                            }
-                                    }
+                            else {
+                                if(log) MTLOG(QString("Record NOT passed: %1 (%2)").arg(record).arg(getFiles.at(i).trimmed()));
+                                ui->CloudBrowser->append("<font color=\"red\">" + record + "</font>");
+                                cloudCnt++;
+                                if(cloudCnt > 500) {
+                                    ui->CloudBrowser->clear();
+                                    cloudCnt = 0;
+                                }
                             }
-                            else if(log) MTLOG(QString("Error opening file %1").arg(filename));
+                        }
                     }
-                    sendFips();//Process and send all data in send list
+                }
+                else if(log) MTLOG(QString("Error opening file %1").arg(filename));
             }
-            m_processingFips = false;
+            sendFips();//Process and send all data in send list
+        }
+        m_processingFips = false;
     }
     else {
         if(log) MTLOG("Already processing fips!");
@@ -510,7 +546,7 @@ void MT500::getFipsCounts()
     /*m_processingFips = true;
     for(int i = 0; i < getFiles.size(); i++) {
         QString line;
-		QMap<QDateTime, QString> tempSorter;
+        QMap<QDateTime, QString> tempSorter;
         QString filename = fipsDir+getFiles.at(i).trimmed()+".dat";
         if(log) MTLOG(QString("Getting newest record in %1").arg(filename));
         QFile file(filename);
@@ -522,26 +558,26 @@ void MT500::getFipsCounts()
                 QStringList fields = line.split(",");
                 QString dateTime = fields.at(0);
                 QDateTime newDate = QDateTime::fromString(dateTime.trimmed(), "MM/dd/yyyy HH:mm:ss");
-				tempSorter.insertMulti(newDate, line);
+                tempSorter.insertMulti(newDate, line);
             }
-			QMap<QDateTime, QString>::iterator it;
-			QDateTime newestRecord;
-			int ctr = 0;
-			for(it = tempSorter.begin(); it != tempSorter.end(); ++it) {
-				ctr++;
-				if(ctr == tempSorter.size()) {
-					newestRecord = it.key();
-					QMap<QDateTime, QString> tempMap;
-					tempMap.insert(newestRecord, it.value());
-					fipsCount.insert(getFiles.at(i).trimmed(), tempMap);
-				}
-			}
+            QMap<QDateTime, QString>::iterator it;
+            QDateTime newestRecord;
+            int ctr = 0;
+            for(it = tempSorter.begin(); it != tempSorter.end(); ++it) {
+                ctr++;
+                if(ctr == tempSorter.size()) {
+                    newestRecord = it.key();
+                    QMap<QDateTime, QString> tempMap;
+                    tempMap.insert(newestRecord, it.value());
+                    fipsCount.insert(getFiles.at(i).trimmed(), tempMap);
+                }
+            }
             if(log) MTLOG(QString("Newest Record for %1: %2").arg(filename).arg(newestRecord.toString()));
         }
         else {
             if(log) MTLOG(QString("Error opening file %1").arg(filename));
             QMap<QDateTime, QString> tempMap;
-	    tempMap.insert(QDateTime::fromString("01/01/1970 00:00:00", "MM/dd/yyyy HH:mm:ss"), "Empty Placeholder");
+        tempMap.insert(QDateTime::fromString("01/01/1970 00:00:00", "MM/dd/yyyy HH:mm:ss"), "Empty Placeholder");
             fipsCount.insert(getFiles.at(i).trimmed(), tempMap);
         }
     }
