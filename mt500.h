@@ -63,6 +63,9 @@ public slots:
     void resetPorts();
     void clrBuf();
 
+    void threadLog(QString);
+    void insertIntoFipsCount(QString, QMap<QDateTime, QString>);
+
 private slots:
     void on_addButton_clicked();
     void on_delButton_clicked();
@@ -89,6 +92,7 @@ private:
     QHash<int, QDateTime> fipsFilter; //GID, Last Record
     QHash<int, QString> sendList; //Index, Time:Raw Data
     QHash<QString, QString> filterList; //Node, GID
+    CountFipsThread countFipsThread;
 };
 
 class SleeperThread : public QThread
