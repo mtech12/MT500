@@ -6,7 +6,6 @@ MT500::MT500(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MT500)
 {
-    qRegisterMetaType<myFipsCount>("myFipsCount");
     log = true;
     if(log) MTLOG("MT500 Object Constructed");
     ui->setupUi(this);
@@ -61,13 +60,11 @@ void MT500::threadLog(QString toLog)
 }
 
 void MT500::insertIntoFipsCount (QString key, QDateTime dateTime, QString record)
-//void MT500::insertIntoFipsCount (QString key, myFipsCount value)
 {
     if(log) MTLOG("Insert into fipscount...");
     QMap<QDateTime, QString> tempMap;
     tempMap.insert(dateTime, record);
     fipsCount.insert(key, tempMap);                    
-    //fipsCount.insert(key, value);
 }
 
 void MT500::changeEvent(QEvent *e)
